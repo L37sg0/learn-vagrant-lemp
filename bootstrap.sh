@@ -1,43 +1,34 @@
 #!/usr/bin/env bash
 set -e
 
-# Install requred software
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:ondrej/php
+# Non-interactive
+export DEBIAN_FRONTEND=noninteractive
+
+# 1. Install services
 apt-get update
-apt-get install -y apt-transport-https ca-certificates
-apt-get install -y nginx mysql-server
-apt-get install -y --no-install-recommends php8.1
-apt-get install -y php8.1-fpm php8.1-cli php8.1-common php8.1-mysql php8.1-zip php8.1-gd php8.1-mbstring php8.1-curl php8.1-xml php8.1-bcmath unzip
+apt-get install -y nginx mysql-server unzip \
+    php8.1-fpm php8.1-cli php8.1-common php8.1-mysql \
+    php8.1-zip php8.1-gd php8.1-mbstring php8.1-curl \
+    php8.1-xml php8.1-bcmath
 
-# Enable services
-systemctl start php8.1-fpm
-systemctl enable php8.1-fpm
-systemctl start mysql.service
+# 2. Symlinc
+# sites-available to sites-enabled for example.conf
+rm -f /etc/nginx/sites-enabled/default /etc/nginx/sites-available/default 
+ln -sf /etc/nginx/sites-available/99-example.conf /etc/nginx/sites-enabled/
+rm -f /var/www/html/index.nginx-debian.html
+# php and mysql custom configurations
+ln -sf /etc/php/8.1/fpm/conf.d/custom/99-local.ini /etc/php/8.1/fpm/conf.d/99-local.ini
+ln -sf /etc/mysql/conf.d/custom/99-my.cnf /etc/mysql/conf.d/99-my.cnf
 
-# Configure nginx for php
-cat << "EOF" > /etc/nginx/sites-available/example.conf
-server {
-    listen 80;
-    root /var/www/html;
-    index index.php index.html index.htm;
 
-    location / {
-        try_files $uri $uri/ =404;
-    }
 
-    location ~ \.php$ {
-        include snippets/fastcgi-php.conf;
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-    }
+# 3. Set up mysql for php
+# Create new user with password for php to use mysql
+mysql -e "CREATE USER IF NOT EXISTS 'dbuser'@'localhost' IDENTIFIED WITH mysql_native_password BY '123456';"
+mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'dbuser'@'localhost' WITH GRANT OPTION;"
+mysql -e "FLUSH PRIVILEGES;"
 
-    location ~ /\.ht {
-        deny all;
-    }
-}
-EOF
-
-# Activate example website and restart nginx
-ln -sf /etc/nginx/sites-available/example.conf /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
+# 4. Restart services and apply changes
+systemctl restart php8.1-fpm
+systemctl restart mysql
 systemctl restart nginx
