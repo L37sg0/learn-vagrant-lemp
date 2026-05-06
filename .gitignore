@@ -1,1 +1,8 @@
 .vagrant/
+etc/mysql/custom/*
+etc/php/custom/*
+etc/nginx/sites-available/*
+!etc/mysql/custom/99-my.cnf
+!etc/php/custom/99-local.ini
+!etc/nginx/sites-available/99-example.conf
+
