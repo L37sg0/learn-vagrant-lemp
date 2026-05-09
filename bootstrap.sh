@@ -32,3 +32,11 @@ mysql -e "FLUSH PRIVILEGES;"
 systemctl restart php8.1-fpm
 systemctl restart mysql
 systemctl restart nginx
+
+# 5. Install Composer
+if [ ! -f /usr/local/bin/composer ]; then
+    curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+fi
+mkdir -p /home/vagrant/.composer
+chown -R vagrant:vagrant /home/vagrant/.composer
+composer --version
