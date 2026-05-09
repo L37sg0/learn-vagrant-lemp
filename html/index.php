@@ -36,6 +36,7 @@
       $phpVersion = explode('-', $phpVersion)[0];
       echo "<p>PHP version: <span class='success'>" . $phpVersion . "</span></p>";
     ?>
+    <p> PHP info page: <a href="/phpinfo.php">here</a></p>
     
 
     <hr>
@@ -58,6 +59,20 @@
           echo "<p>MySQL version: <span class='success'>" . $serverInfo . "</span></p>";
 
           $conn->close();
+      }
+    ?>
+
+    <hr>
+    <h3>Composer status:</h3>
+    <?php
+      $composerVersion = shell_exec('composer --version 2>&1');
+      
+      if ($composerVersion) {
+          $versionParts = explode(' (', $composerVersion);
+          echo "<p>Status: <span class='success'>✅ Installed</span></p>";
+          echo "<p>Details: <span class='success'>" . $versionParts[0] . "</span></p>";
+      } else {
+          echo "<p class='error'>❌ Composer not found</p>";
       }
     ?>
 
